@@ -249,39 +249,41 @@ export const HistoryStrip = ({
       <Text fontSize="13px" fontWeight="520" mb={2} color="fg.default">
         {summaryText(cells)}
       </Text>
-      <Flex gap="3px" w="full">
-        {cells.map((c, i) => {
-          const style = CELL_STYLE[c.kind];
-          return (
-            <Tooltip
-              key={i}
-              content={<DayTooltip cell={c} />}
-              portalled
-              showArrow
-              positionerProps={{ zIndex: 2100 }}
-              openDelay={120}
-              closeDelay={60}
-            >
-              <Box
-                flexGrow={1}
-                flexShrink={1}
-                flexBasis={0}
-                minW={0}
-                h="22px"
-                borderRadius="3px"
-                bg={style.bg}
-                opacity={style.dim ? 0.35 : 1}
-                cursor="default"
-                boxShadow={
-                  c.isToday
-                    ? "0 0 0 2px var(--chakra-colors-bg-canvas), 0 0 0 3.5px var(--chakra-colors-fg-muted)"
-                    : undefined
-                }
-              />
-            </Tooltip>
-          );
-        })}
-      </Flex>
+      <Box overflowX="auto" pb="2px">
+        <Flex gap="3px" w="full" minW={{ base: "430px", md: 0 }}>
+          {cells.map((c, i) => {
+            const style = CELL_STYLE[c.kind];
+            return (
+              <Tooltip
+                key={i}
+                content={<DayTooltip cell={c} />}
+                portalled
+                showArrow
+                positionerProps={{ zIndex: 2100 }}
+                openDelay={120}
+                closeDelay={60}
+              >
+                <Box
+                  flexGrow={1}
+                  flexShrink={1}
+                  flexBasis={0}
+                  minW={0}
+                  h={{ base: "18px", md: "22px" }}
+                  borderRadius="3px"
+                  bg={style.bg}
+                  opacity={style.dim ? 0.35 : 1}
+                  cursor="default"
+                  boxShadow={
+                    c.isToday
+                      ? "0 0 0 2px var(--chakra-colors-bg-canvas), 0 0 0 3.5px var(--chakra-colors-fg-muted)"
+                      : undefined
+                  }
+                />
+              </Tooltip>
+            );
+          })}
+        </Flex>
+      </Box>
       {/* Legend */}
       <Flex gap="14px" mt={2} flexWrap="wrap">
         {[

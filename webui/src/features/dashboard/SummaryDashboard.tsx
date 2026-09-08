@@ -258,32 +258,36 @@ const HeroBanner = ({ state, newestMs, nextMs }: HeroStats) => {
   const nextIn = nextMs ? untilText(nextMs) : null;
 
   return (
-    <Card.Root borderRadius="2xl" shadow="sm" mb={6}>
-      <Card.Body py={6} px={7}>
-        <Flex align="center" gap={5}>
+    <Card.Root borderRadius="2xl" shadow="sm">
+      <Card.Body py={{ base: 5, md: 6 }} px={{ base: 4, sm: 5, md: 7 }}>
+        <Flex align="center" gap={{ base: 3, sm: 4, md: 5 }}>
           <Flex
             flexShrink={0}
-            w="60px"
-            h="60px"
+            w={{ base: "48px", sm: "54px", md: "60px" }}
+            h={{ base: "48px", sm: "54px", md: "60px" }}
             borderRadius="full"
             bg={STATE_BG[state]}
             color={STATE_COLORS[state]}
             align="center"
             justify="center"
-            fontSize="2xl"
+            fontSize={{ base: "xl", md: "2xl" }}
           >
             {HERO_ICON[state]}
           </Flex>
           <Box>
             <Text
-              fontSize="23px"
+              fontSize={{ base: "19px", sm: "21px", md: "23px" }}
               fontWeight="650"
               letterSpacing="-0.02em"
               lineHeight={1.2}
             >
               {HERO_TITLE[state]()}
             </Text>
-            <Text fontSize="14.5px" color="fg.muted" mt="3px">
+            <Text
+              fontSize={{ base: "13px", md: "14.5px" }}
+              color="fg.muted"
+              mt="3px"
+            >
               {newestMs ? (
                 <Text as="span" fontWeight="semibold" color="fg.default">
                   {m.dashboard_hero_last_backup({ ago: agoText(newestMs) })}
@@ -487,7 +491,7 @@ const PlanCard = ({
       overflow="hidden"
       position="relative"
     >
-      <Card.Body px={5} py={5}>
+      <Card.Body px={{ base: 4, md: 5 }} py={{ base: 4, md: 5 }}>
         {/* Title row */}
         <Flex justify="space-between" align="flex-start" gap={3}>
           <Box>
@@ -583,7 +587,7 @@ const RepoCard = ({
 
   return (
     <Card.Root borderRadius="2xl" shadow="sm">
-      <Card.Body px={5} py={5}>
+      <Card.Body px={{ base: 4, md: 5 }} py={{ base: 4, md: 5 }}>
         <Flex justify="space-between" align="flex-start" gap={3}>
           <CardTitle>{summary.id}</CardTitle>
           <Box mt="6px" flexShrink={0}>
@@ -726,12 +730,12 @@ const RecentActivity = ({
         return (
           <Box
             key={`${row.planId}-${row.flowId}`}
-            px={5}
+            px={{ base: 4, md: 5 }}
             py="13px"
             borderTop={i === 0 ? "none" : "1px solid"}
             borderColor="border.subtle"
           >
-            <Flex align="center" gap="13px">
+            <Flex align="center" gap={{ base: "10px", md: "13px" }}>
               <Box
                 w="8px"
                 h="8px"
@@ -740,7 +744,12 @@ const RecentActivity = ({
                 flexShrink={0}
               />
               <Box flex={1} minW={0}>
-                <Flex align="baseline" gap="7px" minW={0}>
+                <Flex
+                  align={{ base: "flex-start", sm: "baseline" }}
+                  direction={{ base: "column", sm: "row" }}
+                  gap={{ base: 0, sm: "7px" }}
+                  minW={0}
+                >
                   <Text fontSize="14px" fontWeight="550" truncate>
                     {prettyPlanId(row.planId)}
                   </Text>
@@ -762,6 +771,7 @@ const RecentActivity = ({
                   fontSize="12.5px"
                   color="fg.muted"
                   fontVariantNumeric="tabular-nums"
+                  display={{ base: "none", sm: "block" }}
                   flexShrink={0}
                 >
                   +{formatBytes(row.bytesAdded)}
@@ -827,7 +837,7 @@ export const SummaryDashboard = () => {
   const hero = heroStats(plans);
 
   return (
-    <Stack gap={8} width="full">
+    <Stack gap={{ base: 6, md: 8 }} width="full">
       {/* Multihost summary */}
       <MultihostSummary multihostConfig={config?.multihost ?? null} />
 
@@ -878,14 +888,32 @@ export const SummaryDashboard = () => {
       {/* System Info */}
       <Stack gap={4}>
         <Heading size="md">{m.dashboard_system_info_title()}</Heading>
-        <DataListRoot orientation="horizontal">
+        <DataListRoot orientation={{ base: "vertical", sm: "horizontal" }}>
           <DataListItem
             label={m.dashboard_config_path()}
-            value={summaryData.configPath}
+            value={
+              <Text
+                fontFamily="mono"
+                fontSize="sm"
+                overflowWrap="anywhere"
+                minW={0}
+              >
+                {summaryData.configPath}
+              </Text>
+            }
           />
           <DataListItem
             label={m.dashboard_data_dir()}
-            value={summaryData.dataPath}
+            value={
+              <Text
+                fontFamily="mono"
+                fontSize="sm"
+                overflowWrap="anywhere"
+                minW={0}
+              >
+                {summaryData.dataPath}
+              </Text>
+            }
           />
         </DataListRoot>
 

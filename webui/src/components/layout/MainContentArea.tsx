@@ -19,8 +19,8 @@ export const MainContentAreaTemplate = ({
   children: React.ReactNode;
 }) => {
   return (
-    <Box px={6} pb={6}>
-      <BreadcrumbRoot my={4}>
+    <Box px={{ base: 3, sm: 4, md: 6 }} pb={{ base: 3, md: 6 }}>
+      <BreadcrumbRoot my={{ base: 3, md: 4 }}>
         {breadcrumbs.map((b, i) => {
           const isLast = i === breadcrumbs.length - 1;
           if (isLast) {
@@ -41,11 +41,11 @@ export const MainContentAreaTemplate = ({
         })}
       </BreadcrumbRoot>
       <Box
-        p={6}
+        p={{ base: 3, sm: 4, md: 6 }}
         m={0}
         minH={280}
         bg="bg.panel" // Using semantic token for generic background
-        borderRadius="md"
+        borderRadius={{ base: "lg", md: "md" }}
         boxShadow="none" // Antd usually has no shadow on content bg, but Chakra Cards do. Keeping simple for now.
       >
         {children}
