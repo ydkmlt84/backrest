@@ -44,6 +44,33 @@ Backrest supports multiple notification services for hook delivery:
 | Healthchecks | Ping Healthchecks.io monitoring URLs | [Healthchecks API](https://healthchecks.io/docs/http_api/)                                          |
 | Command  | Execute custom commands                | See [command cookbook](../cookbooks/command-hook-examples)                                       |
 
+### Discord embeds
+
+Discord templates normally render as the webhook message's `content`. If a
+template renders a valid JSON object, Backrest sends that object as the complete
+Discord webhook payload instead. This allows embeds and other Discord webhook
+fields while preserving plain-text templates.
+
+<div v-pre>
+
+```json
+{
+  "embeds": [
+    {
+      "title": "Backrest · {{ .Plan.Id }}",
+      "description": {{ .JsonMarshal .Summary }},
+      "color": {{ if .Error }}15548997{{ else }}5763719{{ end }}
+    }
+  ]
+}
+```
+
+</div>
+
+Use `.JsonMarshal` for dynamic strings placed in JSON so quotes and control
+characters are escaped correctly. A JSON value that is not an object continues
+to be sent as plain text.
+
 ### Healthchecks.io Integration
 
 The Healthchecks hook type is specifically designed to integrate with [Healthchecks.io](https://healthchecks.io/) or compatible self-hosted instances. 

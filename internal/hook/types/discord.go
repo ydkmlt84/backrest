@@ -29,21 +29,32 @@ func (discordHandler) Execute(ctx context.Context, h *v1.Hook, vars interface{},
 	l.Sugar().Infof("Sending discord message to %s", h.GetActionDiscord().GetWebhookUrl())
 	l.Debug("Sending discord message", zap.String("payload", payload))
 
-	type Message struct {
-		Content string `json:"content"`
+	requestBytes, err := discordRequestBytes(payload)
+	if err != nil {
+		return fmt.Errorf("building discord request: %w", err)
 	}
-
-	request := Message{
-		Content: payload, // leading newline looks better in discord.
-	}
-
-	requestBytes, _ := json.Marshal(request)
 	body, err := hookutil.PostRequest(h.GetActionDiscord().GetWebhookUrl(), "application/json", bytes.NewReader(requestBytes))
 	if err != nil {
 		return fmt.Errorf("sending discord message to %q: %w", h.GetActionDiscord().GetWebhookUrl(), err)
 	}
 	zap.S().Debug("Discord response", zap.String("body", body))
 	return nil
+}
+
+// discordRequestBytes preserves the simple text-template behavior while also
+// allowing templates to render a complete Discord webhook JSON object. This
+// supports embeds without expanding Backrest's hook configuration schema.
+func discordRequestBytes(payload string) ([]byte, error) {
+	if json.Valid([]byte(payload)) {
+		var request map[string]any
+		if err := json.Unmarshal([]byte(payload), &request); err == nil {
+			return []byte(payload), nil
+		}
+	}
+
+	return json.Marshal(struct {
+		Content string `json:"content"`
+	}{Content: payload})
 }
 
 func (discordHandler) ActionType() reflect.Type {
