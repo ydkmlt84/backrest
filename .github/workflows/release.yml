@@ -1,9 +1,6 @@
 name: Tagged Release
 
 on:
-  push:
-    tags:
-      - "v*.*.*"
   workflow_dispatch:
 
 permissions:
