@@ -18,12 +18,12 @@ jobs:
   test-nix:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Set up Go
-        uses: actions/setup-go@v4
+        uses: actions/setup-go@v7
         with:
-          go-version: "1.24"
+          go-version-file: go.mod
 
       - name: Install gotestsum
         run: go install gotest.tools/gotestsum@latest
@@ -45,15 +45,15 @@ jobs:
     env:
       TZ: UTC
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Setup pnpm
-        uses: pnpm/action-setup@v4
+        uses: pnpm/action-setup@v6
         with:
           version: 9
 
       - name: Setup Node
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v7
         with:
           node-version: "20"
           cache: pnpm
@@ -75,20 +75,20 @@ jobs:
       # Not RCLONE_*: rclone reads RCLONE_VERSION as its --version flag.
       E2E_RCLONE_VERSION: v1.69.1
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Set up Go
-        uses: actions/setup-go@v4
+        uses: actions/setup-go@v7
         with:
-          go-version: "1.24"
+          go-version-file: go.mod
 
       - name: Setup pnpm
-        uses: pnpm/action-setup@v4
+        uses: pnpm/action-setup@v6
         with:
           version: 9
 
       - name: Setup Node
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v7
         with:
           node-version: "20"
           cache: pnpm
@@ -108,13 +108,13 @@ jobs:
       # Keyed on the file that pins RequiredResticVersion; global-setup
       # provisions restic into this directory on a cache miss.
       - name: Cache restic
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: webui/e2e/.cache/restic-data
           key: restic-e2e-${{ hashFiles('internal/resticinstaller/resticinstaller.go') }}
 
       - name: Cache playwright browsers
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: ~/.cache/ms-playwright
           key: playwright-${{ hashFiles('webui/pnpm-lock.yaml') }}
@@ -126,7 +126,7 @@ jobs:
       # e2e spec skips itself if rclone is absent, so provision it for coverage.
       - name: Cache rclone
         id: cache-rclone
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: webui/e2e/.cache/rclone-bin
           key: rclone-${{ env.E2E_RCLONE_VERSION }}
@@ -149,7 +149,7 @@ jobs:
           E2E_SKIP_WEBUI_BUILD=1 E2E_BACKREST_BIN=$PWD/e2e/.cache/backrest pnpm run e2e
 
       - name: Upload playwright report
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         if: failure()
         with:
           name: playwright-report
@@ -160,12 +160,12 @@ jobs:
   test-win:
     runs-on: windows-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v7
 
       - name: Set up Go
-        uses: actions/setup-go@v4
+        uses: actions/setup-go@v7
         with:
-          go-version: "1.24"
+          go-version-file: go.mod
 
       - name: Create Fake WebUI Sources
         run: |
@@ -173,9 +173,15 @@ jobs:
 
       - name: Resolve latest restic version
         shell: powershell
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         id: restic-version
         run: |
-           $latest = Invoke-RestMethod -Uri "https://api.github.com/repos/restic/restic/releases/latest"
+           $headers = @{
+             Authorization = "Bearer $env:GH_TOKEN"
+             "X-GitHub-Api-Version" = "2022-11-28"
+           }
+           $latest = Invoke-RestMethod -Uri "https://api.github.com/repos/restic/restic/releases/latest" -Headers $headers
            $tag = $latest.tag_name
            if ($tag.StartsWith("v")) {
              $tag = $tag.Substring(1)
@@ -184,7 +190,7 @@ jobs:
 
       - name: Cache restic
         id: cache-restic
-        uses: actions/cache@v3
+        uses: actions/cache@v6
         with:
           path: restic-bin
           key: restic-windows-${{ env.RESTIC_VERSION }}
