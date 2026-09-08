@@ -105,6 +105,12 @@ const GettingStartedGuide = React.lazy(() =>
   })),
 );
 
+const SettingsPage = React.lazy(() =>
+  import("../features/settings/SettingsModal").then((m) => ({
+    default: m.SettingsPage,
+  })),
+);
+
 const PlanView = React.lazy(() =>
   import("../features/plans/PlanView").then((m) => ({
     default: m.PlanView,
@@ -844,21 +850,20 @@ const SidebarContent = ({ onClose }: { onClose?: () => void }) => {
         ) : null}
 
         {/* SETTINGS */}
-        <Box mt={4} mx={4}>
-          <Button
-            variant="outline"
-            size="sm"
-            width="full"
-            justifyContent="flex-start"
-            onClick={async () => {
-              const { SettingsModal } =
-                await import("../features/settings/SettingsModal");
-              showModal(<SettingsModal />);
-              onClose?.();
-            }}
-          >
-            <FiSettings /> {m.app_menu_settings()}
-          </Button>
+        <Box
+          cursor="pointer"
+          onClick={() => handleNav("/settings")}
+          px={4}
+          py={2}
+          mt={4}
+          bg={isActive("/settings") ? "bg.muted" : undefined}
+          _hover={{ bg: "bg.muted" }}
+          userSelect="none"
+        >
+          <Flex align="center" gap={2}>
+            <FiSettings />
+            <Text fontWeight="medium">{m.app_menu_settings()}</Text>
+          </Flex>
         </Box>
       </AccordionRoot>
     </Box>
@@ -985,6 +990,16 @@ export const App: React.FC = () => {
                     </MainContentAreaTemplate>
                   }
                 />
+                <Route
+                  path="/settings"
+                  element={
+                    <MainContentAreaTemplate
+                      breadcrumbs={[{ title: m.app_menu_settings() }]}
+                    >
+                      <SettingsPage />
+                    </MainContentAreaTemplate>
+                  }
+                />
                 <Route path="/plan/:planId" element={<PlanViewContainer />} />
                 <Route path="/repo/:repoId" element={<RepoViewContainer />} />
                 <Route
@@ -1024,7 +1039,12 @@ const MobileNavTrigger = () => {
       onOpenChange={(e) => setOpen(e.open)}
     >
       <DrawerTrigger asChild>
-        <IconButton variant="ghost" size="sm" color="white" aria-label={m.app_menu()}>
+        <IconButton
+          variant="ghost"
+          size="sm"
+          color="white"
+          aria-label={m.app_menu()}
+        >
           <FiMenu />
         </IconButton>
       </DrawerTrigger>

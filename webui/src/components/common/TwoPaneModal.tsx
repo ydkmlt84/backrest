@@ -22,6 +22,7 @@ export interface SectionDef {
 interface TwoPaneModalProps {
   isOpen: boolean;
   onClose: () => void;
+  presentation?: "modal" | "page";
 
   // Header
   title: string;
@@ -53,6 +54,7 @@ interface TwoPaneModalProps {
 export const TwoPaneModal: React.FC<TwoPaneModalProps> = ({
   isOpen,
   onClose,
+  presentation = "modal",
   title,
   subtitle,
   headerIcon,
@@ -106,6 +108,282 @@ export const TwoPaneModal: React.FC<TwoPaneModalProps> = ({
     sectionRefs.current[id] = el;
   }, []);
 
+  const content = (
+    <>
+      {/* Modal header; page routes provide their own page heading. */}
+      {presentation === "modal" && (
+        <Flex
+          align="center"
+          gap={3}
+          px={5}
+          py={3.5}
+          borderBottomWidth="1px"
+          borderColor="border"
+          flexShrink={0}
+        >
+          {headerIcon && (
+            <Flex
+              w={7}
+              h={7}
+              borderRadius="sm"
+              bg="bg.subtle"
+              borderWidth="1px"
+              borderColor="border"
+              align="center"
+              justify="center"
+              color="fg.muted"
+              flexShrink={0}
+            >
+              {headerIcon}
+            </Flex>
+          )}
+          <Box flex={1} minW={0}>
+            <Flex align="center" gap={2} flexWrap="nowrap" minW={0}>
+              <Text
+                fontSize="md"
+                fontWeight="semibold"
+                color="fg"
+                whiteSpace="nowrap"
+                flexShrink={0}
+              >
+                {title}
+              </Text>
+              {headerExtra}
+            </Flex>
+            {subtitle && (
+              <Text fontSize="xs" color="fg.subtle" fontFamily="mono" truncate>
+                {subtitle}
+              </Text>
+            )}
+          </Box>
+          <Box
+            as="button"
+            onClick={onClose}
+            bg="transparent"
+            border={0}
+            cursor="pointer"
+            color="fg.subtle"
+            p={1.5}
+            borderRadius="sm"
+            flexShrink={0}
+            _hover={{ bg: "bg.muted" }}
+          >
+            <FiX size={16} />
+          </Box>
+        </Flex>
+      )}
+
+      {/* Two-pane body */}
+      <Flex flex={1} minH={0}>
+        {/* Nav rail */}
+        <Box
+          as="nav"
+          w="196px"
+          borderRightWidth={presentation === "modal" ? "1px" : "0"}
+          borderColor="border"
+          py={3}
+          px={2}
+          flexShrink={0}
+          bg={presentation === "modal" ? "bg.subtle" : "transparent"}
+          overflowY="auto"
+          display={
+            presentation === "modal" ? { base: "none", md: "block" } : "none"
+          }
+        >
+          {sections.map((s) => {
+            const isActive = activeSection === s.id;
+            return (
+              <Box
+                key={s.id}
+                as="button"
+                onClick={() => scrollTo(s.id)}
+                display="flex"
+                alignItems="center"
+                gap={2}
+                w="full"
+                py={1.5}
+                px={2.5}
+                bg={isActive ? "bg.muted" : "transparent"}
+                border={0}
+                borderRadius="sm"
+                fontSize="sm"
+                fontWeight={isActive ? "medium" : "normal"}
+                color="fg"
+                cursor="pointer"
+                textAlign="left"
+                mb={0.5}
+                _hover={{ bg: isActive ? "bg.muted" : "bg.emphasized" }}
+              >
+                <Box color={isActive ? "fg" : "fg.muted"} display="inline-flex">
+                  {React.isValidElement(s.icon)
+                    ? s.icon
+                    : React.createElement(s.icon as IconType, {
+                        size: 14,
+                      })}
+                </Box>
+                <Text flex={1}>{s.label}</Text>
+              </Box>
+            );
+          })}
+        </Box>
+
+        {/* Scrolling content */}
+        <Box
+          ref={scrollRef}
+          flex={1}
+          overflowY={presentation === "modal" ? "auto" : "visible"}
+          bg={presentation === "modal" ? "bg.subtle" : "transparent"}
+          p={presentation === "modal" ? { base: 3, sm: 4, md: 5 } : 0}
+        >
+          <TwoPaneContext.Provider value={{ registerRef }}>
+            {children}
+          </TwoPaneContext.Provider>
+          {presentation === "modal" && <Box h={10} />}
+        </Box>
+      </Flex>
+
+      {/* Footer / save bar */}
+      {footer ? (
+        <Box
+          borderTopWidth="1px"
+          borderColor="border"
+          px={4}
+          py={2.5}
+          flexShrink={0}
+        >
+          {footer}
+        </Box>
+      ) : (
+        <Flex
+          align={{ base: "stretch", sm: "center" }}
+          direction={{ base: "column", sm: "row" }}
+          gap={2.5}
+          px={{ base: 3, sm: 4 }}
+          py={2.5}
+          borderTopWidth="1px"
+          borderColor="border"
+          bg={
+            dirty
+              ? "orange.50"
+              : presentation === "modal"
+                ? "bg.panel"
+                : "transparent"
+          }
+          _dark={{
+            bg: dirty
+              ? "orange.950"
+              : presentation === "modal"
+                ? "bg.panel"
+                : "transparent",
+          }}
+          transition="background 120ms linear"
+          flexShrink={0}
+        >
+          <Flex
+            align="center"
+            gap={2}
+            flex={1}
+            minW={0}
+            display={presentation === "page" && !dirty ? "none" : "flex"}
+          >
+            {dirty ? (
+              <>
+                <Box
+                  w={2}
+                  h={2}
+                  borderRadius="full"
+                  bg="orange.400"
+                  display="inline-block"
+                />
+                <Text
+                  fontSize="sm"
+                  color="orange.800"
+                  _dark={{ color: "orange.200" }}
+                  fontWeight="medium"
+                >
+                  {dirtyCount} unsaved {dirtyCount === 1 ? "change" : "changes"}
+                </Text>
+                {errorCount > 0 && (
+                  <Flex
+                    align="center"
+                    gap={1}
+                    ml={2}
+                    fontSize="xs"
+                    color="red.600"
+                    _dark={{ color: "red.300" }}
+                  >
+                    <FiAlertCircle size={12} />
+                    {errorCount} {errorCount === 1 ? "error" : "errors"}{" "}
+                    {m.two_pane_modal_to_fix()}
+                  </Flex>
+                )}
+              </>
+            ) : (
+              <>
+                <Box color="green.500">
+                  <FiCheck size={13} />
+                </Box>
+                <Text fontSize="sm" color="fg.muted">
+                  {m.two_pane_modal_all_changes_saved()}
+                </Text>
+              </>
+            )}
+          </Flex>
+          <Flex gap={2.5} justify="flex-end">
+            {presentation === "modal" && (
+              <Button variant="ghost" size="sm" onClick={onClose}>
+                {m.button_cancel()}
+              </Button>
+            )}
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={onDiscard}
+              disabled={!dirty}
+              opacity={dirty ? 1 : 0.45}
+            >
+              {m.two_pane_modal_discard_changes()}
+            </Button>
+            <Button
+              size="sm"
+              data-testid={saveTestId}
+              onClick={onSave}
+              disabled={!dirty || saveDisabled || errorCount > 0}
+              opacity={!dirty || saveDisabled || errorCount > 0 ? 0.5 : 1}
+            >
+              {saving ? (
+                <>
+                  <FiLoader size={12} className="spin" />
+                  {m.two_pane_modal_saving()}
+                </>
+              ) : (
+                <>
+                  <FiCheck size={12} />
+                  {m.two_pane_modal_save_changes()}
+                </>
+              )}
+            </Button>
+          </Flex>
+        </Flex>
+      )}
+    </>
+  );
+
+  if (presentation === "page") {
+    return (
+      <Flex
+        width="full"
+        maxW="none"
+        minH={0}
+        overflow="visible"
+        bg="transparent"
+        direction="column"
+      >
+        {content}
+      </Flex>
+    );
+  }
+
   return (
     <DialogRoot
       open={isOpen}
@@ -125,243 +403,7 @@ export const TwoPaneModal: React.FC<TwoPaneModalProps> = ({
             display="flex"
             flexDirection="column"
           >
-            {/* Header */}
-            <Flex
-              align="center"
-              gap={3}
-              px={5}
-              py={3.5}
-              borderBottomWidth="1px"
-              borderColor="border"
-              flexShrink={0}
-            >
-              {headerIcon && (
-                <Flex
-                  w={7}
-                  h={7}
-                  borderRadius="sm"
-                  bg="bg.subtle"
-                  borderWidth="1px"
-                  borderColor="border"
-                  align="center"
-                  justify="center"
-                  color="fg.muted"
-                  flexShrink={0}
-                >
-                  {headerIcon}
-                </Flex>
-              )}
-              <Box flex={1} minW={0}>
-                <Flex align="center" gap={2} flexWrap="nowrap" minW={0}>
-                  <Text
-                    fontSize="md"
-                    fontWeight="semibold"
-                    color="fg"
-                    whiteSpace="nowrap"
-                    flexShrink={0}
-                  >
-                    {title}
-                  </Text>
-                  {headerExtra}
-                </Flex>
-                {subtitle && (
-                  <Text
-                    fontSize="xs"
-                    color="fg.subtle"
-                    fontFamily="mono"
-                    truncate
-                  >
-                    {subtitle}
-                  </Text>
-                )}
-              </Box>
-              <Box
-                as="button"
-                onClick={onClose}
-                bg="transparent"
-                border={0}
-                cursor="pointer"
-                color="fg.subtle"
-                p={1.5}
-                borderRadius="sm"
-                flexShrink={0}
-                _hover={{ bg: "bg.muted" }}
-              >
-                <FiX size={16} />
-              </Box>
-            </Flex>
-
-            {/* Two-pane body */}
-            <Flex flex={1} minH={0}>
-              {/* Nav rail */}
-              <Box
-                as="nav"
-                w="196px"
-                borderRightWidth="1px"
-                borderColor="border"
-                py={3}
-                px={2}
-                flexShrink={0}
-                bg="bg.subtle"
-                overflowY="auto"
-              >
-                {sections.map((s) => {
-                  const isActive = activeSection === s.id;
-                  return (
-                    <Box
-                      key={s.id}
-                      as="button"
-                      onClick={() => scrollTo(s.id)}
-                      display="flex"
-                      alignItems="center"
-                      gap={2}
-                      w="full"
-                      py={1.5}
-                      px={2.5}
-                      bg={isActive ? "bg.muted" : "transparent"}
-                      border={0}
-                      borderRadius="sm"
-                      fontSize="sm"
-                      fontWeight={isActive ? "medium" : "normal"}
-                      color="fg"
-                      cursor="pointer"
-                      textAlign="left"
-                      mb={0.5}
-                      _hover={{ bg: isActive ? "bg.muted" : "bg.emphasized" }}
-                    >
-                      <Box
-                        color={isActive ? "fg" : "fg.muted"}
-                        display="inline-flex"
-                      >
-                        {React.isValidElement(s.icon)
-                          ? s.icon
-                          : React.createElement(s.icon as IconType, {
-                              size: 14,
-                            })}
-                      </Box>
-                      <Text flex={1}>{s.label}</Text>
-                    </Box>
-                  );
-                })}
-              </Box>
-
-              {/* Scrolling content */}
-              <Box
-                ref={scrollRef}
-                flex={1}
-                overflowY="auto"
-                bg="bg.subtle"
-                p={5}
-              >
-                <TwoPaneContext.Provider value={{ registerRef }}>
-                  {children}
-                </TwoPaneContext.Provider>
-                <Box h={10} />
-              </Box>
-            </Flex>
-
-            {/* Footer / save bar */}
-            {footer ? (
-              <Box
-                borderTopWidth="1px"
-                borderColor="border"
-                px={4}
-                py={2.5}
-                flexShrink={0}
-              >
-                {footer}
-              </Box>
-            ) : (
-              <Flex
-                align="center"
-                gap={2.5}
-                px={4}
-                py={2.5}
-                borderTopWidth="1px"
-                borderColor="border"
-                bg={dirty ? "orange.50" : "bg.panel"}
-                _dark={{ bg: dirty ? "orange.950" : "bg.panel" }}
-                transition="background 120ms linear"
-                flexShrink={0}
-              >
-                <Flex align="center" gap={2} flex={1} minW={0}>
-                  {dirty ? (
-                    <>
-                      <Box
-                        w={2}
-                        h={2}
-                        borderRadius="full"
-                        bg="orange.400"
-                        display="inline-block"
-                      />
-                      <Text
-                        fontSize="sm"
-                        color="orange.800"
-                        _dark={{ color: "orange.200" }}
-                        fontWeight="medium"
-                      >
-                        {dirtyCount} unsaved{" "}
-                        {dirtyCount === 1 ? "change" : "changes"}
-                      </Text>
-                      {errorCount > 0 && (
-                        <Flex
-                          align="center"
-                          gap={1}
-                          ml={2}
-                          fontSize="xs"
-                          color="red.600"
-                          _dark={{ color: "red.300" }}
-                        >
-                          <FiAlertCircle size={12} />
-                          {errorCount} {errorCount === 1 ? "error" : "errors"}{" "}
-                          {m.two_pane_modal_to_fix()}
-                        </Flex>
-                      )}
-                    </>
-                  ) : (
-                    <>
-                      <Box color="green.500">
-                        <FiCheck size={13} />
-                      </Box>
-                      <Text fontSize="sm" color="fg.muted">
-                        {m.two_pane_modal_all_changes_saved()}
-                      </Text>
-                    </>
-                  )}
-                </Flex>
-                <Button variant="ghost" size="sm" onClick={onClose}>
-                  {m.button_cancel()}
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={onDiscard}
-                  disabled={!dirty}
-                  opacity={dirty ? 1 : 0.45}
-                >
-                  {m.two_pane_modal_discard_changes()}
-                </Button>
-                <Button
-                  size="sm"
-                  data-testid={saveTestId}
-                  onClick={onSave}
-                  disabled={!dirty || saveDisabled || errorCount > 0}
-                  opacity={!dirty || saveDisabled || errorCount > 0 ? 0.5 : 1}
-                >
-                  {saving ? (
-                    <>
-                      <FiLoader size={12} className="spin" />
-                      {m.two_pane_modal_saving()}
-                    </>
-                  ) : (
-                    <>
-                      <FiCheck size={12} />
-                      {m.two_pane_modal_save_changes()}
-                    </>
-                  )}
-                </Button>
-              </Flex>
-            )}
+            {content}
           </DialogContent>
         </DialogPositioner>
       </Portal>

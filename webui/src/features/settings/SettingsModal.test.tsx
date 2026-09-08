@@ -2,7 +2,7 @@ import { fireEvent, screen, waitFor } from "@testing-library/react";
 import { create } from "@bufbuild/protobuf";
 import { describe, expect, it, vi } from "vitest";
 import * as m from "../../paraglide/messages";
-import { SettingsModal } from "./SettingsModal";
+import { SettingsModal, SettingsPage } from "./SettingsModal";
 import { renderWithProviders } from "../../test/render";
 import {
   makeConfig,
@@ -191,5 +191,20 @@ describe("SettingsModal (first-run path)", () => {
     expect(instanceInput).toBeDisabled();
     // A configured instance is past first-run: no initial-setup prompt.
     expect(screen.queryByText(initialSetupTitle)).not.toBeInTheDocument();
+  });
+});
+
+describe("SettingsPage", () => {
+  it("renders settings as page content instead of a dialog", async () => {
+    primeDefaults();
+    renderWithProviders(<SettingsPage />, { config: makeConfig() });
+
+    expect(
+      (await screen.findAllByText(m.settings_modal_general())).length,
+    ).toBeGreaterThan(0);
+    expect(
+      screen.getAllByText(m.settings_modal_authentication()).length,
+    ).toBeGreaterThan(0);
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
   });
 });
