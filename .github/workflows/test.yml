@@ -173,9 +173,15 @@ jobs:
 
       - name: Resolve latest restic version
         shell: powershell
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         id: restic-version
         run: |
-           $latest = Invoke-RestMethod -Uri "https://api.github.com/repos/restic/restic/releases/latest"
+           $headers = @{
+             Authorization = "Bearer $env:GH_TOKEN"
+             "X-GitHub-Api-Version" = "2022-11-28"
+           }
+           $latest = Invoke-RestMethod -Uri "https://api.github.com/repos/restic/restic/releases/latest" -Headers $headers
            $tag = $latest.tag_name
            if ($tag.StartsWith("v")) {
              $tag = $tag.Substring(1)
