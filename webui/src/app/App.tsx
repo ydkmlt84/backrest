@@ -851,8 +851,12 @@ const SidebarContent = ({ onClose }: { onClose?: () => void }) => {
 
         {/* SETTINGS */}
         <Box
+          as="button"
           cursor="pointer"
           onClick={() => handleNav("/settings")}
+          width="full"
+          textAlign="left"
+          border={0}
           px={4}
           py={2}
           mt={4}

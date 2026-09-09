@@ -2,14 +2,15 @@ import { test, expect } from '../harness/fixtures';
 import { seedInstance } from '../harness/seed';
 
 /**
- * Settings modal: reopening after first-run setup, immutability of the
+ * Settings page: opening after first-run setup, immutability of the
  * instance id, and persistence of an edit across a reload.
  *
  * seedInstance(backrest) (default name "e2e-test") sets config.instance and
  * disables auth via the API directly, so on load shouldShowSettings() is
  * false (webui/src/state/configutil.ts) and no dialog auto-opens — the
- * Settings modal must be reopened explicitly from the sidebar's "Settings"
- * button (webui/src/app/App.tsx, SidebarContent).
+ * Settings page must be opened explicitly from the sidebar's "Settings"
+ * button (webui/src/app/App.tsx, SidebarContent). The separate first-run
+ * suite continues to verify that fresh installations use a modal.
  *
  * webui/src/features/settings/SettingsModal.tsx sets
  * `disabled={!!config.instance}` on the instance-id input, so once an
@@ -25,7 +26,7 @@ import { seedInstance } from '../harness/seed';
 const INSTANCE_NAME = 'e2e-test';
 
 test.describe('settings edit', () => {
-  test('reopened settings show the immutable instance id, and an edit persists across reload', async ({
+  test('settings page shows the immutable instance id, and an edit persists across reload', async ({
     page,
     backrest,
   }) => {
@@ -36,43 +37,38 @@ test.describe('settings edit', () => {
     await expect(page.getByTestId('sidebar-add-repo')).toBeVisible();
     await expect(page.getByRole('dialog')).toHaveCount(0);
 
-    // Reopen Settings from the sidebar.
+    // Open the dedicated Settings page from the sidebar. This is deliberately
+    // not a dialog; first-run.spec.ts covers the modal presentation.
     await page.getByRole('button', { name: 'Settings' }).click();
-    const dialog = page.getByRole('dialog');
-    await expect(dialog).toBeVisible();
+    await expect(page).toHaveURL(/#\/settings$/);
+    await expect(page.getByRole('dialog')).toHaveCount(0);
+    const settingsPage = page.getByTestId('settings-page');
+    await expect(settingsPage).toBeVisible();
 
-    const instanceId = dialog.getByTestId('settings-instance-id');
+    const instanceId = settingsPage.getByTestId('settings-instance-id');
     await expect(instanceId).toHaveValue(INSTANCE_NAME);
     await expect(instanceId).toBeDisabled();
 
     // No edits yet: the save bar is not dirty, so Save is disabled.
-    await expect(dialog.getByTestId('settings-submit')).toBeDisabled();
+    await expect(settingsPage.getByTestId('settings-submit')).toBeDisabled();
 
     // Harmless change: add an auth user (auth stays disabled throughout).
-    await dialog.getByRole('button', { name: 'Add user' }).click();
-    await dialog.getByPlaceholder('Username', { exact: true }).fill('e2e-user');
-    await dialog.getByPlaceholder('Password', { exact: true }).fill('e2e-password-123');
+    await settingsPage.getByRole('button', { name: 'Add user' }).click();
+    await settingsPage.getByPlaceholder('Username', { exact: true }).fill('e2e-user');
+    await settingsPage.getByPlaceholder('Password', { exact: true }).fill('e2e-password-123');
 
-    await dialog.getByTestId('settings-submit').click();
+    const submit = settingsPage.getByTestId('settings-submit');
+    await submit.click();
 
-    // Persistent state: the save bar flips from "unsaved changes" to "All
-    // changes saved" once SetConfig resolves (dirty becomes false again).
-    await expect(dialog.getByText('All changes saved')).toBeVisible();
+    // SetConfig resolving makes the form clean and disables Save again.
+    await expect(submit).toBeDisabled();
 
-    // The modal does not auto-close on save; it only arms a reload-on-close
-    // flag (SettingsModal.tsx: setReloadOnCancel(true)). Closing it now
-    // triggers window.location.reload().
-    await dialog.getByRole('button', { name: 'Cancel', exact: true }).click();
-
-    // Post-reload: seeded config is still valid (instance set, auth
-    // disabled), so the sidebar loads directly with no auto-opened dialog.
-    await expect(page.getByTestId('sidebar-add-repo')).toBeVisible();
-    await expect(page.getByRole('dialog')).toHaveCount(0);
-
-    // Reopen Settings and confirm both facts persisted.
-    await page.getByRole('button', { name: 'Settings' }).click();
-    const reopened = page.getByRole('dialog');
+    // Reload the settings route and confirm both facts persisted. A configured
+    // instance must return to the page rather than opening the first-run modal.
+    await page.reload();
+    const reopened = page.getByTestId('settings-page');
     await expect(reopened).toBeVisible();
+    await expect(page.getByRole('dialog')).toHaveCount(0);
 
     const reopenedInstanceId = reopened.getByTestId('settings-instance-id');
     await expect(reopenedInstanceId).toHaveValue(INSTANCE_NAME);

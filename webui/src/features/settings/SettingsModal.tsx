@@ -58,12 +58,13 @@ import { ToggleField } from "../../components/common/ToggleField";
 
 export const SettingsModal = ({
   presentation = "modal",
+  onPageClose,
 }: {
   presentation?: "modal" | "page";
+  onPageClose?: (reload: boolean) => void;
 }) => {
   const [config, setConfig] = useConfig();
   const showModal = useShowModal();
-  const navigate = useNavigate();
   const peerStates = useSyncStates();
   const [confirmLoading, setConfirmLoading] = useState(false);
   const [reloadOnCancel, setReloadOnCancel] = useState(false);
@@ -246,10 +247,8 @@ export const SettingsModal = ({
   const handleCancel = () => {
     if (presentation === "modal") {
       showModal(null);
-    } else if (reloadOnCancel) {
-      window.location.assign("/");
     } else {
-      navigate("/");
+      onPageClose?.(reloadOnCancel);
     }
     if (presentation === "modal" && reloadOnCancel) {
       window.location.reload();
@@ -624,7 +623,21 @@ export const SettingsModal = ({
   );
 };
 
-export const SettingsPage = () => <SettingsModal presentation="page" />;
+export const SettingsPage = () => {
+  const navigate = useNavigate();
+
+  return (
+    <Box data-testid="settings-page" width="full">
+      <SettingsModal
+        presentation="page"
+        onPageClose={(reload) => {
+          navigate("/");
+          if (reload) window.setTimeout(() => window.location.reload(), 0);
+        }}
+      />
+    </Box>
+  );
+};
 
 // --- Pairing Token Item ---
 
