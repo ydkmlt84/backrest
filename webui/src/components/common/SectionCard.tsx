@@ -1,6 +1,7 @@
 import React from "react";
 import { Box, Flex, Text } from "@chakra-ui/react";
 import { IconType } from "react-icons";
+import { useTwoPaneRef } from "./TwoPaneModal";
 
 interface SectionCardProps {
   id?: string;
@@ -19,11 +20,16 @@ export const SectionCard: React.FC<SectionCardProps> = ({
   children,
   cardRef,
 }) => {
+  const { presentation } = useTwoPaneRef();
+
   return (
     <Box
       ref={cardRef}
       data-section={id}
-      bg="bg.panel"
+      bg={presentation === "modal" ? "white" : "bg.panel"}
+      _dark={{
+        bg: presentation === "modal" ? "gray.700" : "bg.panel",
+      }}
       borderWidth="1px"
       borderColor="border"
       borderRadius="md"

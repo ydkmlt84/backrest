@@ -70,10 +70,11 @@ async function createPlanWithCommandHookViaUI(
   await commandBox.fill(opts.command);
   await expect(commandBox).toHaveValue(opts.command);
 
-  // Submit -> dialog closes, plan appears in the sidebar.
+  // Submit -> dialog closes, plan appears on the Plans page.
   await dialog.getByTestId('add-plan-submit').click();
   await expect(page.getByRole('dialog')).toHaveCount(0);
-  await expect(page.getByTestId(`sidebar-item-plan-${opts.name}`)).toBeVisible();
+  await page.goto(`${page.url().split('/#/')[0]}/#/plans`);
+  await expect(page.getByTestId(`plan-card-${opts.name}`)).toBeVisible();
 }
 
 test.describe('backup hooks', () => {
@@ -96,7 +97,6 @@ test.describe('backup hooks', () => {
 
     await page.goto(backrest.url);
     await expect(page.getByTestId('sidebar-add-plan')).toBeVisible();
-    await expect(page.getByTestId('sidebar-item-repo-local-repo')).toBeVisible();
 
     await createPlanWithCommandHookViaUI(page, {
       name: 'hook-plan',
@@ -112,7 +112,7 @@ test.describe('backup hooks', () => {
     expect(plan?.hooks.length, 'plan should have exactly one hook').toBe(1);
 
     // Run the backup from the plan view.
-    await page.getByTestId('sidebar-item-plan-hook-plan').click();
+    await page.getByTestId('plan-card-hook-plan').getByRole('button', { name: 'Open' }).click();
     await expect(page).toHaveURL(/#\/plan\/hook-plan$/);
     await page.getByTestId('plan-backup-now').click();
     await page.getByRole('tab', { name: 'List View' }).click();
@@ -166,7 +166,6 @@ test.describe('backup hooks', () => {
 
     await page.goto(backrest.url);
     await expect(page.getByTestId('sidebar-add-plan')).toBeVisible();
-    await expect(page.getByTestId('sidebar-item-repo-local-repo')).toBeVisible();
 
     await createPlanWithCommandHookViaUI(page, {
       name: 'hook-plan',
@@ -175,7 +174,7 @@ test.describe('backup hooks', () => {
       command: 'exit 1',
     });
 
-    await page.getByTestId('sidebar-item-plan-hook-plan').click();
+    await page.getByTestId('plan-card-hook-plan').getByRole('button', { name: 'Open' }).click();
     await expect(page).toHaveURL(/#\/plan\/hook-plan$/);
     await page.getByTestId('plan-backup-now').click();
     await page.getByRole('tab', { name: 'List View' }).click();

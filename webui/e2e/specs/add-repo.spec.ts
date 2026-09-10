@@ -40,11 +40,11 @@ test.describe('add repo (CUJ2)', () => {
     await dialog.getByTestId('add-repo-submit').click();
 
     // restic init + AddRepo's GUID lookup can take a few seconds.
-    const sidebarItem = page.getByTestId('sidebar-item-repo-my-repo');
-    await expect(sidebarItem).toBeVisible({ timeout: 30_000 });
     await expect(page.getByRole('dialog')).toHaveCount(0);
+    await page.goto(`${backrest.url}/#/repos`);
+    await expect(page.getByTestId('repository-card-my-repo')).toBeVisible({ timeout: 30_000 });
 
-    await sidebarItem.click();
+    await page.getByTestId('repository-card-my-repo').getByRole('button', { name: 'Open' }).click();
     await expect(page).toHaveURL(/#\/repo\//);
 
     // Repo view rendered.
@@ -93,14 +93,14 @@ test.describe('add repo (CUJ2)', () => {
     await expect(toast).toBeVisible({ timeout: 15_000 });
 
     // Testing configuration must not have created the repo yet.
-    await expect(page.getByTestId('sidebar-item-repo-my-repo')).toHaveCount(0);
     await expect(dialog).toBeVisible();
 
     // Toasts render top-end, clear of the dialog footer, so Submit is
     // clickable while the toast is still showing.
     await dialog.getByTestId('add-repo-submit').click();
 
-    await expect(page.getByTestId('sidebar-item-repo-my-repo')).toBeVisible({ timeout: 30_000 });
     await expect(page.getByRole('dialog')).toHaveCount(0);
+    await page.goto(`${backrest.url}/#/repos`);
+    await expect(page.getByTestId('repository-card-my-repo')).toBeVisible({ timeout: 30_000 });
   });
 });

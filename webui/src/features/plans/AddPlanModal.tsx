@@ -194,7 +194,9 @@ export const AddPlanModal = ({
         !(formData.retention.policyTimeBucketed.keepLastN > 1)
       ) {
         throw new Error(
-          m.add_plan_modal_your_schedule_runs_more_than_once_per_hour_please_specify_a({ count: 1 }),
+          m.add_plan_modal_your_schedule_runs_more_than_once_per_hour_please_specify_a(
+            { count: 1 },
+          ),
         );
       }
 
@@ -223,7 +225,8 @@ export const AddPlanModal = ({
 
       if (template) {
         const idx = configCopy.plans.findIndex((r) => r.id === template.id);
-        if (idx === -1) throw new Error(m.add_plan_modal_failed_to_update_plan_not_found());
+        if (idx === -1)
+          throw new Error(m.add_plan_modal_failed_to_update_plan_not_found());
         configCopy.plans[idx] = plan;
       } else {
         configCopy.plans.push(plan);
@@ -231,10 +234,11 @@ export const AddPlanModal = ({
 
       setConfig(await backrestService.setConfig(configCopy));
       showModal(null);
-    } catch (e: any) {
-      alerts.error(
-        formatErrorAlert(e, m.settings_error_operation()),
+      alerts.success(
+        template ? `Plan ${plan.id} updated` : `Plan ${plan.id} added`,
       );
+    } catch (e: any) {
+      alerts.error(formatErrorAlert(e, m.settings_error_operation()));
     } finally {
       setConfirmLoading(false);
     }
@@ -254,11 +258,31 @@ export const AddPlanModal = ({
   });
 
   const sections: SectionDef[] = [
-    { id: "details", label: m.op_row_details(), icon: <FiFileText size={14} /> },
-    { id: "scope", label: m.add_plan_modal_scope(), icon: <FiFolder size={14} /> },
-    { id: "schedule", label: m.add_plan_modal_schedule(), icon: <FiClock size={14} /> },
-    { id: "retention", label: m.add_plan_modal_retention(), icon: <FiArchive size={14} /> },
-    { id: "advanced", label: m.add_plan_modal_advanced(), icon: <FiSliders size={14} /> },
+    {
+      id: "details",
+      label: m.op_row_details(),
+      icon: <FiFileText size={14} />,
+    },
+    {
+      id: "scope",
+      label: m.add_plan_modal_scope(),
+      icon: <FiFolder size={14} />,
+    },
+    {
+      id: "schedule",
+      label: m.add_plan_modal_schedule(),
+      icon: <FiClock size={14} />,
+    },
+    {
+      id: "retention",
+      label: m.add_plan_modal_retention(),
+      icon: <FiArchive size={14} />,
+    },
+    {
+      id: "advanced",
+      label: m.add_plan_modal_advanced(),
+      icon: <FiSliders size={14} />,
+    },
   ];
 
   const footer = (
@@ -293,11 +317,7 @@ export const AddPlanModal = ({
     <TwoPaneModal
       isOpen={true}
       onClose={() => showModal(null)}
-      title={
-        template
-          ? m.add_plan_modal_title_update()
-          : m.app_menu_add_plan()
-      }
+      title={template ? m.add_plan_modal_title_update() : m.app_menu_add_plan()}
       headerIcon={<FiFileText size={14} />}
       sections={sections}
       footer={footer}

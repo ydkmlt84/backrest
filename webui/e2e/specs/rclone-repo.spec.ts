@@ -147,16 +147,15 @@ test.describe('rclone-backed repo', () => {
     await expect(successBanner).toBeVisible();
 
     // Testing configuration must not have created the repo yet.
-    await expect(page.getByTestId(`sidebar-item-repo-${REPO_NAME}`)).toHaveCount(0);
     await expect(dialog).toBeVisible();
 
     // --- Submit: initializes the repo through rclone ----------------------
     await dialog.getByTestId('add-repo-submit').click();
 
-    const sidebarItem = page.getByTestId(`sidebar-item-repo-${REPO_NAME}`);
-    // restic init through rclone + AddRepo's GUID lookup can take a while.
-    await expect(sidebarItem).toBeVisible({ timeout: 60_000 });
     await expect(page.getByRole('dialog')).toHaveCount(0);
+    await page.goto(`${backrest.url}/#/repos`);
+    // restic init through rclone + AddRepo's GUID lookup can take a while.
+    await expect(page.getByTestId(`repository-card-${REPO_NAME}`)).toBeVisible({ timeout: 60_000 });
 
     // --- Prove it's usable: seed a plan + run a real backup via the API ---
     const dataPath = await backrest.makeTestData({
@@ -173,7 +172,10 @@ test.describe('rclone-backed repo', () => {
     // The oplog subscription + on-mount GetOperations surface the historical
     // Backup operation. The list tab renders OperationRows directly (the tree
     // tab needs a flow selected to reveal rows).
-    await sidebarItem.click();
+    await page
+      .getByTestId(`repository-card-${REPO_NAME}`)
+      .getByRole('button', { name: 'Open' })
+      .click();
     await expect(page).toHaveURL(/#\/repo\//);
     await expect(page.getByRole('heading', { name: REPO_NAME })).toBeVisible();
     await page.getByRole('tab', { name: 'List View' }).click();

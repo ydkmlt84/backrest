@@ -29,6 +29,7 @@ interface TwoPaneModalProps {
   subtitle?: string;
   headerIcon?: React.ReactElement;
   headerExtra?: React.ReactNode;
+  showCloseButton?: boolean;
 
   // Sections & nav
   sections: SectionDef[];
@@ -59,6 +60,7 @@ export const TwoPaneModal: React.FC<TwoPaneModalProps> = ({
   subtitle,
   headerIcon,
   headerExtra,
+  showCloseButton = true,
   sections,
   children,
   dirty = false,
@@ -156,20 +158,22 @@ export const TwoPaneModal: React.FC<TwoPaneModalProps> = ({
               </Text>
             )}
           </Box>
-          <Box
-            as="button"
-            onClick={onClose}
-            bg="transparent"
-            border={0}
-            cursor="pointer"
-            color="fg.subtle"
-            p={1.5}
-            borderRadius="sm"
-            flexShrink={0}
-            _hover={{ bg: "bg.muted" }}
-          >
-            <FiX size={16} />
-          </Box>
+          {showCloseButton && (
+            <Box
+              as="button"
+              onClick={onClose}
+              bg="transparent"
+              border={0}
+              cursor="pointer"
+              color="fg.subtle"
+              p={1.5}
+              borderRadius="sm"
+              flexShrink={0}
+              _hover={{ bg: "bg.muted" }}
+            >
+              <FiX size={16} />
+            </Box>
+          )}
         </Flex>
       )}
 
@@ -184,7 +188,7 @@ export const TwoPaneModal: React.FC<TwoPaneModalProps> = ({
           py={3}
           px={2}
           flexShrink={0}
-          bg={presentation === "modal" ? "bg.subtle" : "transparent"}
+          bg="transparent"
           overflowY="auto"
           display={
             presentation === "modal" ? { base: "none", md: "block" } : "none"
@@ -232,10 +236,10 @@ export const TwoPaneModal: React.FC<TwoPaneModalProps> = ({
           ref={scrollRef}
           flex={1}
           overflowY={presentation === "modal" ? "auto" : "visible"}
-          bg={presentation === "modal" ? "bg.subtle" : "transparent"}
-          p={presentation === "modal" ? { base: 3, sm: 4, md: 5 } : 0}
+          bg="transparent"
+          p={presentation === "modal" ? { base: 4, sm: 5, md: 6 } : 0}
         >
-          <TwoPaneContext.Provider value={{ registerRef }}>
+          <TwoPaneContext.Provider value={{ registerRef, presentation }}>
             {children}
           </TwoPaneContext.Provider>
           {presentation === "modal" && <Box h={10} />}
@@ -398,6 +402,8 @@ export const TwoPaneModal: React.FC<TwoPaneModalProps> = ({
             maxW={width}
             height="86vh"
             maxH="820px"
+            bg="gray.50"
+            _dark={{ bg: "gray.800" }}
             p={0}
             overflow="hidden"
             display="flex"
@@ -414,10 +420,12 @@ export const TwoPaneModal: React.FC<TwoPaneModalProps> = ({
 // --- Context for child sections to register refs ---
 interface TwoPaneContextValue {
   registerRef: (id: string, el: HTMLElement | null) => void;
+  presentation: "modal" | "page";
 }
 
 const TwoPaneContext = React.createContext<TwoPaneContextValue>({
   registerRef: () => {},
+  presentation: "page",
 });
 
 export const useTwoPaneRef = () => React.useContext(TwoPaneContext);

@@ -29,7 +29,7 @@ const instancePlaceholder = m.settings_field_instance_id_placeholder();
 const initialSetupTitle = m.settings_initial_setup_title().trim();
 
 const getSaveButton = () =>
-  screen.getByRole("button", { name: /save changes/i });
+  screen.getByRole("button", { name: /finish setup|save changes/i });
 
 describe("SettingsModal (first-run path)", () => {
   it("renders the initial-setup prompt with an empty, editable instance field", async () => {
@@ -37,7 +37,7 @@ describe("SettingsModal (first-run path)", () => {
     renderWithProviders(<SettingsModal />, { config: makeFirstRunConfig() });
 
     expect(await screen.findByText(initialSetupTitle)).toBeInTheDocument();
-    expect(screen.getByText(m.app_menu_settings())).toBeInTheDocument();
+    expect(screen.getByText("Set up Backrest")).toBeInTheDocument();
 
     const instanceInput = screen.getByPlaceholderText(instancePlaceholder);
     expect(instanceInput).toHaveValue("");
@@ -53,7 +53,7 @@ describe("SettingsModal (first-run path)", () => {
     renderWithProviders(<SettingsModal />, { config: makeFirstRunConfig() });
 
     const saveButton = await screen.findByRole("button", {
-      name: /save changes/i,
+      name: /finish setup/i,
     });
     expect(saveButton).toBeDisabled();
     expect(backrestService.setConfig).not.toHaveBeenCalled();
@@ -178,7 +178,7 @@ describe("SettingsModal (first-run path)", () => {
     const [content] = errorSpy.mock.calls[errorSpy.mock.calls.length - 1];
     expect(String(content)).toContain("boom");
     // Modal is still mounted: its title remains visible.
-    expect(screen.getByText(m.app_menu_settings())).toBeInTheDocument();
+    expect(screen.getByText("Set up Backrest")).toBeInTheDocument();
   });
 
   it("renders a configured instance with an immutable instance field", async () => {

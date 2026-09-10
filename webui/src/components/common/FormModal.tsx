@@ -68,7 +68,11 @@ export const FormModal: React.FC<FormModalProps> = ({
       <Portal>
         <DialogBackdrop />
         <DialogPositioner>
-          <DialogContent maxW={contentMaxW}>
+          <DialogContent
+            maxW={contentMaxW}
+            bg="gray.50"
+            _dark={{ bg: "gray.800" }}
+          >
             <DialogHeader>
               <DialogTitle>{title}</DialogTitle>
             </DialogHeader>

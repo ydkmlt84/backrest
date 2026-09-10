@@ -11,9 +11,15 @@ import {
 } from "@chakra-ui/react";
 import { motion } from "framer-motion";
 import React, { useEffect, useMemo, useState } from "react";
-import { FiCheck, FiDatabase, FiRefreshCw, FiServer } from "react-icons/fi";
+import {
+  FiCheck,
+  FiChevronRight,
+  FiDatabase,
+  FiRefreshCw,
+  FiServer,
+} from "react-icons/fi";
 import { LuTriangle, LuX } from "react-icons/lu";
-import { useNavigate } from "react-router";
+import { useLocation, useNavigate } from "react-router";
 import { toJsonString } from "@bufbuild/protobuf";
 import { ConfigSchema, Multihost } from "../../../gen/ts/v1/config_pb";
 import { Operation, OperationStatus } from "../../../gen/ts/v1/operations_pb";
@@ -581,54 +587,74 @@ const RepoCard = ({
 }: {
   summary: SummaryDashboardResponse_Summary;
 }) => {
+  const [config] = useConfig();
+  const navigate = useNavigate();
   const status = summaryStatus(summary);
   const protectedBytes = Number(summary.protectedBytes);
   const bytesAdded30d = Number(summary.bytesAddedLast30days);
+  const planCount =
+    config?.plans.filter((plan) => plan.repo === summary.id).length ?? 0;
 
   return (
-    <Card.Root borderRadius="2xl" shadow="sm">
-      <Card.Body px={{ base: 4, md: 5 }} py={{ base: 4, md: 5 }}>
-        <Flex justify="space-between" align="flex-start" gap={3}>
-          <CardTitle>{summary.id}</CardTitle>
-          <Box mt="6px" flexShrink={0}>
-            <StatusDot color={status.color} />
-          </Box>
-        </Flex>
-
-        <StatusLine status={status} />
-
-        <Flex flexWrap="wrap" gap="4px 18px" mt={3}>
-          <Box fontSize="12.5px" color="fg.muted">
-            {m.dashboard_repo_window_30d()}{" "}
-            <Text as="span" fontWeight="600" color="green.500">
-              {summary.backupsSuccessLast30days
-                ? m.dashboard_repo_ok({
-                    count: Number(summary.backupsSuccessLast30days),
-                  })
-                : ""}
-            </Text>
-            {summary.backupsFailed30days ? (
-              <Text as="span" fontWeight="600" color="red.500" ml={2}>
-                {m.dashboard_repo_failed({
-                  count: Number(summary.backupsFailed30days),
-                })}
+    <Card.Root
+      borderRadius="xl"
+      borderLeftWidth="4px"
+      borderLeftColor="purple.500"
+      shadow="none"
+      cursor="pointer"
+      onClick={() => navigate(`/repo/${summary.id}`)}
+      _hover={{ borderColor: "purple.400", bg: "bg.subtle" }}
+    >
+      <Card.Body px={{ base: 4, md: 5 }} py={4}>
+        <Flex
+          align={{ base: "flex-start", md: "center" }}
+          direction={{ base: "column", md: "row" }}
+          gap={{ base: 3, md: 5 }}
+        >
+          <Flex align="center" gap={3} minW={0} flex={{ md: 1 }}>
+            <Flex
+              width={9}
+              height={9}
+              borderRadius="full"
+              bg="purple.500/10"
+              color="purple.500"
+              align="center"
+              justify="center"
+              flexShrink={0}
+            >
+              <FiDatabase />
+            </Flex>
+            <Box minW={0}>
+              <CardTitle>{summary.id}</CardTitle>
+              <Text fontSize="12.5px" color="fg.muted">
+                Used by {planCount} {planCount === 1 ? "plan" : "plans"}
               </Text>
-            ) : null}
-          </Box>
-          {protectedBytes > 0 && (
-            <MetaItem label={m.dashboard_card_protected()}>
-              {formatBytes(protectedBytes)}
-            </MetaItem>
-          )}
-          {bytesAdded30d > 0 && (
-            <MetaItem label={m.dashboard_repo_added()}>
-              {formatBytes(bytesAdded30d)}
-            </MetaItem>
-          )}
-        </Flex>
+            </Box>
+          </Flex>
 
-        {/* 30-day history strip */}
-        <HistoryStrip buckets={summary.historyLast30days} />
+          <Flex align="center" gap={2} minW="130px">
+            <StatusDot color={status.color} />
+            <Text fontSize="13px" fontWeight="medium" color={status.color}>
+              {STATE_LABEL[status.state]()}
+            </Text>
+          </Flex>
+
+          <Flex gap={{ base: 4, md: 6 }} flexWrap="wrap">
+            {protectedBytes > 0 && (
+              <MetaItem label={m.dashboard_card_protected()}>
+                {formatBytes(protectedBytes)}
+              </MetaItem>
+            )}
+            {bytesAdded30d > 0 && (
+              <MetaItem label={m.dashboard_repo_added()}>
+                {formatBytes(bytesAdded30d)}
+              </MetaItem>
+            )}
+          </Flex>
+          <Box color="fg.muted" display={{ base: "none", md: "block" }}>
+            <FiChevronRight />
+          </Box>
+        </Flex>
       </Card.Body>
     </Card.Root>
   );
@@ -790,6 +816,7 @@ const RecentActivity = ({
 export const SummaryDashboard = () => {
   const [config] = useConfig();
   const navigate = useNavigate();
+  const location = useLocation();
   const [summaryData, setSummaryData] =
     useState<SummaryDashboardResponse | null>(null);
 
@@ -816,6 +843,7 @@ export const SummaryDashboard = () => {
   useEffect(() => {
     if (!config) return;
     if (
+      location.pathname === "/" &&
       config.repos.length === 0 &&
       config.plans.length === 0 &&
       config.multihost?.knownHosts.length === 0 &&
@@ -823,7 +851,7 @@ export const SummaryDashboard = () => {
     ) {
       navigate("/getting-started");
     }
-  }, [config, navigate]);
+  }, [config, location.pathname, navigate]);
 
   if (!summaryData) {
     return (
@@ -873,13 +901,27 @@ export const SummaryDashboard = () => {
 
       {/* Repos */}
       <Stack gap={4}>
-        <Heading size="md">{m.dashboard_repos_title()}</Heading>
+        <Flex justify="space-between" align="center" gap={3}>
+          <Box>
+            <Heading size="md">{m.dashboard_repos_title()}</Heading>
+          </Box>
+          <Box
+            as="button"
+            color="blue.500"
+            fontSize="sm"
+            fontWeight="medium"
+            onClick={() => navigate("/repos")}
+            cursor="pointer"
+          >
+            Manage repositories
+          </Box>
+        </Flex>
         {summaryData.repoSummaries.length > 0 ? (
-          <SimpleGrid columns={{ base: 1, md: 2 }} gap={4}>
+          <Stack gap={2}>
             {summaryData.repoSummaries.map((s) => (
               <RepoCard key={s.id} summary={s} />
             ))}
-          </SimpleGrid>
+          </Stack>
         ) : (
           <EmptyState title={m.dashboard_repos_empty()} icon={<FiDatabase />} />
         )}

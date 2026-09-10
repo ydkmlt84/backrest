@@ -24,17 +24,7 @@ test.describe('first run', () => {
     await expect(submit).toBeEnabled();
     await submit.click();
 
-    // Persistent-state signal that the save succeeded: the instance id field
-    // becomes immutable once config.instance is set, and the form is no
-    // longer dirty so the submit button disables again.
-    await expect(instanceId).toBeDisabled();
-    await expect(submit).toBeDisabled();
-
-    // Closing the modal after a successful save triggers a full page reload
-    // (SettingsModal's handleCancel/reloadOnCancel behavior). Use the
-    // footer "Cancel" button rather than the (untestid'd) header close icon.
-    await dialog.getByRole('button', { name: 'Cancel' }).click();
-
+    // Finishing first-run setup closes the wizard and reloads into the app.
     await expect(page.getByTestId('sidebar-add-plan')).toBeVisible();
     await expect(page.getByTestId('sidebar-add-repo')).toBeVisible();
     await expect(page.getByRole('dialog')).toHaveCount(0);
@@ -78,18 +68,8 @@ test.describe('first run', () => {
     await expect(submit).toBeEnabled();
     await submit.click();
 
-    // Persistent-state signal that the save succeeded (same as the other
-    // test): instance id locks and the submit button is no longer dirty.
-    await expect(instanceId).toBeDisabled();
-    await expect(submit).toBeDisabled();
-
-    // Saving does NOT itself force a re-auth check or reload (SettingsModal
-    // only sets reloadOnCancel=true); closing the modal is what reloads the
-    // page and causes AuthenticationBoundary to re-fetch config. With auth
-    // now required and no token stored, that fetch comes back Unauthenticated
-    // and the Login modal is shown instead of the sidebar.
-    await dialog.getByRole('button', { name: 'Cancel' }).click();
-
+    // Finishing setup closes the wizard and reloads. With auth now required
+    // and no token stored, the Login modal replaces it.
     const loginDialog = page.getByRole('dialog');
     await expect(loginDialog).toBeVisible();
     const loginUsername = loginDialog.getByTestId('login-username');

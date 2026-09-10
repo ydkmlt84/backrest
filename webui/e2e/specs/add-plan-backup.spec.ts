@@ -26,7 +26,6 @@ test.describe('add plan and run first backup (CUJ3)', () => {
     //    first-run dialog auto-opens.
     await page.goto(backrest.url);
     await expect(page.getByTestId('sidebar-add-plan')).toBeVisible();
-    await expect(page.getByTestId('sidebar-item-repo-local-repo')).toBeVisible();
     await expect(page.getByRole('dialog')).toHaveCount(0);
 
     // 3. Open the Add Plan dialog (lazy-loaded chunk; auto-waited).
@@ -60,11 +59,12 @@ test.describe('add plan and run first backup (CUJ3)', () => {
     await dialog.getByTestId('add-plan-submit').click();
     await expect(page.getByRole('dialog')).toHaveCount(0);
 
-    const planItem = page.getByTestId('sidebar-item-plan-my-plan');
+    await page.goto(`${backrest.url}/#/plans`);
+    const planItem = page.getByTestId('plan-card-my-plan');
     await expect(planItem).toBeVisible();
 
-    // Navigate into the plan view via the sidebar.
-    await planItem.click();
+    // Navigate into the plan view from the collection card.
+    await planItem.getByRole('button', { name: 'Open' }).click();
     await expect(page).toHaveURL(/#\/plan\/my-plan$/);
     await expect(page.getByTestId('plan-backup-now')).toBeVisible();
 

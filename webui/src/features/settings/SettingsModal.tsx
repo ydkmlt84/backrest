@@ -68,6 +68,7 @@ export const SettingsModal = ({
   const peerStates = useSyncStates();
   const [confirmLoading, setConfirmLoading] = useState(false);
   const [reloadOnCancel, setReloadOnCancel] = useState(false);
+  const isFirstRun = presentation === "modal" && !config?.instance;
 
   // Pairing token generation state
   const [showGenerateForm, setShowGenerateForm] = useState(false);
@@ -233,10 +234,16 @@ export const SettingsModal = ({
         );
       }
 
-      setConfig(await backrestService.setConfig(newConfig));
+      const savedConfig = await backrestService.setConfig(newConfig);
+      setConfig(savedConfig);
       setInitialFormData(JSON.stringify(formData));
-      setReloadOnCancel(true);
       alerts.success(m.settings_success_updated());
+      if (isFirstRun) {
+        showModal(null);
+        window.setTimeout(() => window.location.reload(), 0);
+      } else {
+        setReloadOnCancel(true);
+      }
     } catch (e: any) {
       alerts.error(formatErrorAlert(e, m.settings_error_operation()));
     } finally {
@@ -284,8 +291,9 @@ export const SettingsModal = ({
       isOpen={true}
       onClose={handleCancel}
       presentation={presentation}
-      title={m.app_menu_settings()}
+      title={isFirstRun ? "Set up Backrest" : m.app_menu_settings()}
       headerIcon={<FiSettings size={14} />}
+      showCloseButton={!isFirstRun}
       sections={sections}
       dirty={dirty}
       dirtyCount={1}
@@ -295,6 +303,28 @@ export const SettingsModal = ({
       }}
       saving={confirmLoading}
       saveTestId="settings-submit"
+      footer={
+        isFirstRun ? (
+          <Flex
+            align={{ base: "stretch", sm: "center" }}
+            justify="space-between"
+            direction={{ base: "column", sm: "row" }}
+            gap={3}
+          >
+            <Text fontSize="sm" color="fg.muted">
+              You can change these options later from Settings.
+            </Text>
+            <Button
+              data-testid="settings-submit"
+              onClick={handleOk}
+              disabled={!dirty}
+              loading={confirmLoading}
+            >
+              Finish setup
+            </Button>
+          </Flex>
+        ) : undefined
+      }
     >
       {/* General Section */}
       <TwoPaneSection id="general">

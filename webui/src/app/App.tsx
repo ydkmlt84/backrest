@@ -32,7 +32,6 @@ import {
   Separator,
   IconButton,
 } from "@chakra-ui/react";
-import { Tooltip } from "../components/ui/tooltip";
 import { keyframes } from "@emotion/react";
 
 import {
@@ -59,7 +58,6 @@ import { ActivityBar } from "../components/layout/ActivityBar";
 import { OperationStatus } from "../../gen/ts/v1/operations_pb";
 import { useResourceStatus } from "../api/resourceStatus";
 import LogoSvg from "../../assets/logo.svg";
-import { keyBy } from "../lib/util";
 import { Code } from "@connectrpc/connect";
 import { LoginModal } from "../features/auth/LoginModal";
 import { backrestService, syncStateService, setAuthToken } from "../api/client";
@@ -108,6 +106,18 @@ const GettingStartedGuide = React.lazy(() =>
 const SettingsPage = React.lazy(() =>
   import("../features/settings/SettingsModal").then((m) => ({
     default: m.SettingsPage,
+  })),
+);
+
+const PlansPage = React.lazy(() =>
+  import("../features/resources/ResourceCollectionPages").then((m) => ({
+    default: m.PlansPage,
+  })),
+);
+
+const RepositoriesPage = React.lazy(() =>
+  import("../features/resources/ResourceCollectionPages").then((m) => ({
+    default: m.RepositoriesPage,
   })),
 );
 
@@ -451,150 +461,54 @@ const PeerInstanceSection = ({
   );
 };
 
-const SidebarPlanItem = React.memo(
-  ({
-    plan,
-    repoGuid,
-    active,
-    onNav,
-    onEdit,
-  }: {
-    plan: Plan;
-    repoGuid: string | undefined;
-    active: boolean;
-    onNav: (path: string) => void;
-    onEdit: (plan: Plan) => void;
-  }) => {
-    const sel = useMemo(
-      () =>
-        create(OpSelectorSchema, {
-          originalInstanceKeyid: "",
-          planId: plan.id,
-          repoGuid: repoGuid,
-        }),
-      [plan.id, repoGuid],
-    );
-    const planPath = `/plan/${plan.id}`;
-    return (
-      <Flex
-        align="center"
-        pl={9}
-        pr={2}
-        py={1}
-        bg={active ? "bg.emphasized" : undefined}
-        _hover={{ bg: "bg.muted" }}
-        className="group"
-        data-testid={`sidebar-item-plan-${plan.id}`}
-      >
-        <Box flexShrink={0} mr={2}>
-          <IconForResource selector={sel} />
+const SidebarDestination = ({
+  icon,
+  label,
+  count,
+  active,
+  onClick,
+}: {
+  icon: React.ReactNode;
+  label: string;
+  count?: number;
+  active: boolean;
+  onClick: () => void;
+}) => (
+  <Box
+    as="button"
+    cursor="pointer"
+    onClick={onClick}
+    width="full"
+    textAlign="left"
+    border={0}
+    px={4}
+    py={2}
+    bg={active ? "bg.muted" : undefined}
+    _hover={{ bg: "bg.muted" }}
+    userSelect="none"
+  >
+    <Flex align="center" gap={2}>
+      {icon}
+      <Text fontWeight="medium" flex={1}>
+        {label}
+      </Text>
+      {count !== undefined && (
+        <Box
+          minW={6}
+          px={1.5}
+          py={0.5}
+          borderRadius="full"
+          bg="bg.emphasized"
+          color="fg.muted"
+          fontSize="xs"
+          fontWeight="semibold"
+          textAlign="center"
+        >
+          {count}
         </Box>
-        <Tooltip content={plan.id}>
-          <Box
-            flex="1"
-            minW="0"
-            cursor="pointer"
-            onClick={() => onNav(planPath)}
-            userSelect="none"
-          >
-            <Text overflow="hidden" textOverflow="ellipsis" whiteSpace="nowrap">
-              {plan.id}
-            </Text>
-          </Box>
-        </Tooltip>
-        <Box opacity={0} _groupHover={{ opacity: 1 }} transition="opacity 0.2s">
-          <IconButton
-            size="xs"
-            variant="ghost"
-            onClick={(e: React.MouseEvent) => {
-              e.stopPropagation();
-              onEdit(plan);
-            }}
-          >
-            <FiEdit2 />
-          </IconButton>
-        </Box>
-      </Flex>
-    );
-  },
-);
-
-const SidebarRepoItem = React.memo(
-  ({
-    repo,
-    instanceId,
-    active,
-    onNav,
-    onEdit,
-  }: {
-    repo: Repo;
-    instanceId: string;
-    active: boolean;
-    onNav: (path: string) => void;
-    onEdit: (repo: Repo) => void;
-  }) => {
-    const sel = useMemo(
-      () =>
-        create(OpSelectorSchema, {
-          instanceId: instanceId,
-          repoGuid: repo.guid,
-        }),
-      [instanceId, repo.guid],
-    );
-    const repoPath = `/repo/${repo.id}`;
-    return (
-      <Flex
-        align="center"
-        pl={9}
-        pr={2}
-        py={1}
-        bg={active ? "bg.emphasized" : undefined}
-        _hover={{ bg: "bg.muted" }}
-        className="group"
-        data-testid={`sidebar-item-repo-${repo.id}`}
-      >
-        <Box flexShrink={0} mr={2}>
-          <IconForResource selector={sel} />
-        </Box>
-        <Tooltip content={repo.uri}>
-          <Box
-            flex="1"
-            minW="0"
-            cursor="pointer"
-            onClick={() => onNav(repoPath)}
-            userSelect="none"
-          >
-            <Text overflow="hidden" textOverflow="ellipsis" whiteSpace="nowrap">
-              {repo.id}
-            </Text>
-            {repo.originInstanceId && (
-              <Text
-                fontSize="xs"
-                color="fg.muted"
-                overflow="hidden"
-                textOverflow="ellipsis"
-                whiteSpace="nowrap"
-              >
-                {repo.originInstanceId}
-              </Text>
-            )}
-          </Box>
-        </Tooltip>
-        <Box opacity={0} _groupHover={{ opacity: 1 }} transition="opacity 0.2s">
-          <IconButton
-            size="xs"
-            variant="ghost"
-            onClick={(e: React.MouseEvent) => {
-              e.stopPropagation();
-              onEdit(repo);
-            }}
-          >
-            <FiEdit2 />
-          </IconButton>
-        </Box>
-      </Flex>
-    );
-  },
+      )}
+    </Flex>
+  </Box>
 );
 
 const SidebarContent = ({ onClose }: { onClose?: () => void }) => {
@@ -611,17 +525,8 @@ const SidebarContent = ({ onClose }: { onClose?: () => void }) => {
 
   const isActive = (path: string) => location.pathname === path;
 
-  const reposById = useMemo(
-    () => (config ? keyBy(config.repos, (r) => r.id) : {}),
-    [config?.repos],
-  );
-
   // Replicate getSidenavItems functionality with Chakra components
   if (!config) return null;
-
-  const configPlans = config.plans || [];
-  const localRepos = (config.repos || []).filter((r) => !r.originInstanceId);
-  const remoteRepos = (config.repos || []).filter((r) => !!r.originInstanceId);
 
   return (
     <Box
@@ -644,6 +549,7 @@ const SidebarContent = ({ onClose }: { onClose?: () => void }) => {
         <Box
           cursor="pointer"
           onClick={() => handleNav("/")}
+          mt={3}
           px={4}
           py={2}
           bg={isActive("/") ? "bg.muted" : undefined}
@@ -656,124 +562,59 @@ const SidebarContent = ({ onClose }: { onClose?: () => void }) => {
           </Flex>
         </Box>
 
-        {/* PLANS SECTION */}
-        <AccordionItem value="plans">
-          <AccordionItemTrigger px={4} py={2} _hover={{ bg: "bg.muted" }}>
-            <Flex align="center" gap={2}>
-              <FiCalendar />
-              <Text fontWeight="medium">{m.app_menu_plans()}</Text>
-            </Flex>
-          </AccordionItemTrigger>
-          <AccordionItemContent pb={2}>
-            <Button
-              variant="ghost"
-              size="sm"
-              width="full"
-              justifyContent="flex-start"
-              _hover={{ bg: "bg.muted" }}
-              onClick={async () => {
-                const { AddPlanModal } =
-                  await import("../features/plans/AddPlanModal");
-                showModal(<AddPlanModal template={null} />);
-                onClose?.();
-              }}
-              pl={9}
-              mb={1}
-              data-testid="sidebar-add-plan"
-            >
-              <FiPlus /> {m.app_menu_add_plan()}
-            </Button>
-            {configPlans.map((plan) => (
-              <SidebarPlanItem
-                key={plan.id}
-                plan={plan}
-                repoGuid={reposById[plan.repo]?.guid}
-                active={isActive(`/plan/${plan.id}`)}
-                onNav={handleNav}
-                onEdit={async (plan) => {
-                  const { AddPlanModal } =
-                    await import("../features/plans/AddPlanModal");
-                  showModal(<AddPlanModal template={plan} />);
-                  onClose?.();
-                }}
-              />
-            ))}
-          </AccordionItemContent>
-        </AccordionItem>
+        {/* PLANS */}
+        <SidebarDestination
+          icon={<FiCalendar />}
+          label={m.app_menu_plans()}
+          count={config.plans.length}
+          active={isActive("/plans") || location.pathname.startsWith("/plan/")}
+          onClick={() => handleNav("/plans")}
+        />
+        <Button
+          variant="ghost"
+          size="sm"
+          width="full"
+          justifyContent="flex-start"
+          _hover={{ bg: "bg.muted" }}
+          onClick={async () => {
+            const { AddPlanModal } =
+              await import("../features/plans/AddPlanModal");
+            showModal(<AddPlanModal template={null} />);
+            onClose?.();
+          }}
+          pl={9}
+          mb={2}
+          data-testid="sidebar-add-plan"
+        >
+          <FiPlus /> {m.app_menu_add_plan()}
+        </Button>
 
-        {/* REPOS SECTION */}
-        <AccordionItem value="repos">
-          <AccordionItemTrigger px={4} py={2} _hover={{ bg: "bg.muted" }}>
-            <Flex align="center" gap={2}>
-              <FiDatabase />
-              <Text fontWeight="medium">{m.app_menu_repos()}</Text>
-            </Flex>
-          </AccordionItemTrigger>
-          <AccordionItemContent pb={2}>
-            <Button
-              variant="ghost"
-              size="sm"
-              width="full"
-              justifyContent="flex-start"
-              _hover={{ bg: "bg.muted" }}
-              onClick={async () => {
-                const { AddRepoModal } =
-                  await import("../features/repositories/AddRepoModal");
-                showModal(<AddRepoModal template={null} />);
-                onClose?.();
-              }}
-              pl={9}
-              mb={1}
-              data-testid="sidebar-add-repo"
-            >
-              <FiPlus /> {m.app_menu_add_repo()}
-            </Button>
-            {localRepos.map((repo) => (
-              <SidebarRepoItem
-                key={repo.id}
-                repo={repo}
-                instanceId={config.instance}
-                active={isActive(`/repo/${repo.id}`)}
-                onNav={handleNav}
-                onEdit={async (repo) => {
-                  const { AddRepoModal } =
-                    await import("../features/repositories/AddRepoModal");
-                  showModal(<AddRepoModal template={repo} />);
-                  onClose?.();
-                }}
-              />
-            ))}
-            {remoteRepos.length > 0 && (
-              <>
-                <Text
-                  fontSize="xs"
-                  fontWeight="bold"
-                  color="fg.muted"
-                  pl={9}
-                  pt={2}
-                  pb={1}
-                >
-                  {m.app_remote()}
-                </Text>
-                {remoteRepos.map((repo) => (
-                  <SidebarRepoItem
-                    key={repo.id}
-                    repo={repo}
-                    instanceId={config.instance}
-                    active={isActive(`/repo/${repo.id}`)}
-                    onNav={handleNav}
-                    onEdit={async (repo) => {
-                      const { AddRepoModal } =
-                        await import("../features/repositories/AddRepoModal");
-                      showModal(<AddRepoModal template={repo} />);
-                      onClose?.();
-                    }}
-                  />
-                ))}
-              </>
-            )}
-          </AccordionItemContent>
-        </AccordionItem>
+        {/* REPOSITORIES */}
+        <SidebarDestination
+          icon={<FiDatabase />}
+          label={m.app_menu_repos()}
+          count={config.repos.length}
+          active={isActive("/repos") || location.pathname.startsWith("/repo/")}
+          onClick={() => handleNav("/repos")}
+        />
+        <Button
+          variant="ghost"
+          size="sm"
+          width="full"
+          justifyContent="flex-start"
+          _hover={{ bg: "bg.muted" }}
+          onClick={async () => {
+            const { AddRepoModal } =
+              await import("../features/repositories/AddRepoModal");
+            showModal(<AddRepoModal template={null} />);
+            onClose?.();
+          }}
+          pl={9}
+          mb={2}
+          data-testid="sidebar-add-repo"
+        >
+          <FiPlus /> {m.app_menu_add_repo()}
+        </Button>
 
         {/* REMOTE INSTANCES / AUTHORIZED CLIENTS */}
         {config.multihost?.authorizedClients?.length ? (
@@ -1001,6 +842,26 @@ export const App: React.FC = () => {
                       breadcrumbs={[{ title: m.app_menu_settings() }]}
                     >
                       <SettingsPage />
+                    </MainContentAreaTemplate>
+                  }
+                />
+                <Route
+                  path="/plans"
+                  element={
+                    <MainContentAreaTemplate
+                      breadcrumbs={[{ title: m.app_menu_plans() }]}
+                    >
+                      <PlansPage />
+                    </MainContentAreaTemplate>
+                  }
+                />
+                <Route
+                  path="/repos"
+                  element={
+                    <MainContentAreaTemplate
+                      breadcrumbs={[{ title: m.app_menu_repos() }]}
+                    >
+                      <RepositoriesPage />
                     </MainContentAreaTemplate>
                   }
                 />

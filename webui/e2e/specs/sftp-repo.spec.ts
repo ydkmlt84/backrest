@@ -148,10 +148,11 @@ test.describe('sftp-backed repository', () => {
 
     // Submit initializes the repo over sftp (restic init + cat config).
     await dialog.getByTestId('add-repo-submit').click();
-    await expect(page.getByTestId('sidebar-item-repo-sftp-repo')).toBeVisible({
+    await expect(page.getByRole('dialog')).toHaveCount(0);
+    await page.goto(`${backrest.url}/#/repos`);
+    await expect(page.getByTestId('repository-card-sftp-repo')).toBeVisible({
       timeout: 30_000,
     });
-    await expect(page.getByRole('dialog')).toHaveCount(0);
 
     // Restic data must physically exist in the sftp-served directory.
     await expect(async () => {
@@ -227,7 +228,6 @@ test.describe('sftp-backed repository', () => {
     // en.json add_repo_modal_test_error = "Check error: ".
     await expect(page.getByText(/Check error/).first()).toBeVisible({ timeout: 45_000 });
     await expect(dialog).toBeVisible();
-    await expect(page.getByTestId('sidebar-item-repo-sftp-bad')).toHaveCount(0);
   });
 
   test('wrong host key: Test Configuration surfaces the friendly host-key flow, not a generic error', async ({
@@ -268,7 +268,6 @@ test.describe('sftp-backed repository', () => {
     // generic "Check error" toast.
     await expect(page.getByText('Unknown SFTP Host Key')).toBeVisible({ timeout: 45_000 });
     await expect(page.getByText(/Check error/)).toHaveCount(0);
-    await expect(page.getByTestId('sidebar-item-repo-sftp-badkey')).toHaveCount(0);
 
     // Nothing was created on the server side.
     await expect(fs.stat(repoDir)).rejects.toThrow();

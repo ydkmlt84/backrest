@@ -14,9 +14,8 @@ const PASSWORD = 'testpass123';
  * Settings modal. We name the instance, flip the disable-auth toggle OFF to
  * *enable* auth, add a user, and save. handleOk() hashes the password and
  * SetConfigs while the server still has auth disabled, so the save itself is
- * unauthenticated and succeeds. The modal does not reload on save; it sets a
- * reload-on-close flag, so closing it triggers window.location.reload(). After
- * the reload GetConfig returns Unauthenticated and the LoginModal appears.
+ * unauthenticated and succeeds. Finishing setup closes the wizard and reloads;
+ * GetConfig then returns Unauthenticated and the LoginModal appears.
  */
 async function enableAuthAndReachLogin(page: Page, backrest: BackrestInstance) {
   await page.goto(backrest.url);
@@ -36,13 +35,9 @@ async function enableAuthAndReachLogin(page: Page, backrest: BackrestInstance) {
   await settings.getByPlaceholder('Username', { exact: true }).fill(USERNAME);
   await settings.getByPlaceholder('Password', { exact: true }).fill(PASSWORD);
 
-  // Save. handleOk hashes the password then SetConfigs; the save bar flips to
-  // "All changes saved" (dirty=false) once it resolves.
+  // Finish setup. handleOk hashes the password, saves, closes the wizard, and
+  // reloads into the authentication gate.
   await settings.getByTestId('settings-submit').click();
-  await expect(settings.getByText('All changes saved')).toBeVisible();
-
-  // Close the modal → reloadOnCancel triggers window.location.reload().
-  await settings.getByRole('button', { name: 'Cancel', exact: true }).click();
 
   // After reload the API answers Unauthenticated and the Login gate appears.
   await expect(page.getByTestId('login-username')).toBeVisible();
